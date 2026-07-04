@@ -16,14 +16,25 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
   String busca = '';
 
   List<Musica> get musicasFiltradas {
-    if (busca.isEmpty) return musicas;
+    List<Musica> lista = musicas;
 
-    return musicas.where((musica) {
+    if (busca.isNotEmpty) {
       final texto = busca.toLowerCase();
-      return musica.nome.toLowerCase().contains(texto) ||
-          musica.artista.toLowerCase().contains(texto) ||
-          musica.tom.toLowerCase().contains(texto);
-    }).toList();
+
+      lista = musicas.where((musica) {
+        return musica.nome.toLowerCase().contains(texto) ||
+            musica.artista.toLowerCase().contains(texto) ||
+            musica.tom.toLowerCase().contains(texto);
+      }).toList();
+    }
+
+    lista.sort((a, b) {
+      if (a.favorita && !b.favorita) return -1;
+      if (!a.favorita && b.favorita) return 1;
+      return a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
+    });
+
+    return lista;
   }
 
   @override
@@ -39,6 +50,10 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
     });
   }
 
+  Future<void> salvarTudo() async {
+    await StorageService.salvarMusicas(musicas);
+  }
+
   Future<void> adicionarMusica() async {
     final Musica? musica = await Navigator.push(
       context,
@@ -49,7 +64,8 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
       setState(() {
         musicas.add(musica);
       });
-      await StorageService.salvarMusicas(musicas);
+
+      await salvarTudo();
     }
   }
 
@@ -67,7 +83,8 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
       setState(() {
         musicas[index] = musicaEditada;
       });
-      await StorageService.salvarMusicas(musicas);
+
+      await salvarTudo();
     }
   }
 
@@ -96,15 +113,29 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
       setState(() {
         musicas.remove(musica);
       });
-      await StorageService.salvarMusicas(musicas);
+
+      await salvarTudo();
     }
   }
 
-  void abrirCifra(Musica musica) {
-    Navigator.push(
+  Future<void> alternarFavorita(Musica musica) async {
+    setState(() {
+      musica.favorita = !musica.favorita;
+    });
+
+    await salvarTudo();
+  }
+
+  Future<void> abrirCifra(Musica musica) async {
+    final mudouFavorita = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CifraPage(musica: musica)),
     );
+
+    if (mudouFavorita == true) {
+      setState(() {});
+      await salvarTudo();
+    }
   }
 
   @override
@@ -148,7 +179,13 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
                       final musica = lista[index];
 
                       return ListTile(
-                        leading: const Icon(Icons.music_note),
+                        leading: IconButton(
+                          icon: Icon(
+                            musica.favorita ? Icons.star : Icons.star_border,
+                            color: musica.favorita ? Colors.amber : Colors.white,
+                          ),
+                          onPressed: () => alternarFavorita(musica),
+                        ),
                         title: Text(musica.nome),
                         subtitle: Text("${musica.artista} • Tom: ${musica.tom}"),
                         onTap: () => abrirCifra(musica),

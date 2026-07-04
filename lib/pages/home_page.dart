@@ -1,3 +1,5 @@
+import 'repertorios_page.dart';
+import 'favoritas_page.dart';
 import 'package:flutter/material.dart';
 import 'minhas_musicas_page.dart';
 
@@ -57,17 +59,17 @@ class HomePage extends StatelessWidget {
                 const MinhasMusicasPage(),
               ),
               menuButton(
-                context,
-                Icons.folder,
-                "Repertórios",
-                const MinhasMusicasPage(),
-              ),
-              menuButton(
-                context,
-                Icons.star,
-                "Favoritas",
-                const MinhasMusicasPage(),
-              ),
+  context,
+  Icons.folder,
+  "Repertórios",
+  const RepertoriosPage(),
+),
+             menuButton(
+  context,
+  Icons.star,
+  "Favoritas",
+  const FavoritasPage(),
+),
               menuButton(
                 context,
                 Icons.settings,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/musica.dart';
 import '../services/storage_service.dart';
+import '../widgets/musica_card.dart';
 import 'nova_musica_page.dart';
 import 'cifra_page.dart';
 
@@ -15,16 +16,15 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
   List<Musica> musicas = [];
   String busca = '';
 
-  List<Musica> get musicasFiltradas {
+  List<Musica> get listaFiltrada {
     List<Musica> lista = musicas;
 
     if (busca.isNotEmpty) {
       final texto = busca.toLowerCase();
-
-      lista = musicas.where((musica) {
-        return musica.nome.toLowerCase().contains(texto) ||
-            musica.artista.toLowerCase().contains(texto) ||
-            musica.tom.toLowerCase().contains(texto);
+      lista = musicas.where((m) {
+        return m.nome.toLowerCase().contains(texto) ||
+            m.artista.toLowerCase().contains(texto) ||
+            m.tom.toLowerCase().contains(texto);
       }).toList();
     }
 
@@ -40,128 +40,116 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
   @override
   void initState() {
     super.initState();
-    carregarMusicas();
+    carregar();
   }
 
-  Future<void> carregarMusicas() async {
-    final lista = await StorageService.carregarMusicas();
-    setState(() {
-      musicas = lista;
-    });
+  Future<void> carregar() async {
+    musicas = await StorageService.carregarMusicas();
+    setState(() {});
   }
 
-  Future<void> salvarTudo() async {
+  Future<void> salvar() async {
     await StorageService.salvarMusicas(musicas);
   }
 
   Future<void> adicionarMusica() async {
-    final Musica? musica = await Navigator.push(
+    final Musica? nova = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const NovaMusicaPage()),
+      MaterialPageRoute(builder: (_) => const NovaMusicaPage()),
     );
 
-    if (musica != null) {
-      setState(() {
-        musicas.add(musica);
-      });
-
-      await salvarTudo();
+    if (nova != null) {
+      musicas.add(nova);
+      await salvar();
+      setState(() {});
     }
   }
 
   Future<void> editarMusica(Musica musica) async {
     final index = musicas.indexOf(musica);
 
-    final Musica? musicaEditada = await Navigator.push(
+    final Musica? editada = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => NovaMusicaPage(musica: musica),
+        builder: (_) => NovaMusicaPage(musica: musica),
       ),
     );
 
-    if (musicaEditada != null && index != -1) {
-      setState(() {
-        musicas[index] = musicaEditada;
-      });
-
-      await salvarTudo();
+    if (editada != null && index != -1) {
+      musicas[index] = editada;
+      await salvar();
+      setState(() {});
     }
   }
 
   Future<void> excluirMusica(Musica musica) async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Excluir música"),
-          content: Text("Deseja excluir '${musica.nome}'?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancelar"),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Excluir"),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text("Excluir música"),
+        content: Text("Deseja excluir '${musica.nome}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
     );
 
     if (confirmar == true) {
-      setState(() {
-        musicas.remove(musica);
-      });
-
-      await salvarTudo();
+      musicas.remove(musica);
+      await salvar();
+      setState(() {});
     }
   }
 
   Future<void> alternarFavorita(Musica musica) async {
-    setState(() {
-      musica.favorita = !musica.favorita;
-    });
-
-    await salvarTudo();
+    musica.favorita = !musica.favorita;
+    await salvar();
+    setState(() {});
   }
 
   Future<void> abrirCifra(Musica musica) async {
-    final mudouFavorita = await Navigator.push(
+    final mudou = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CifraPage(musica: musica)),
+      MaterialPageRoute(builder: (_) => CifraPage(musica: musica)),
     );
 
-    if (mudouFavorita == true) {
+    if (mudou == true) {
+      await salvar();
       setState(() {});
-      await salvarTudo();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final lista = musicasFiltradas;
+    final lista = listaFiltrada;
 
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text("🎵 Minhas músicas"),
-        centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: adicionarMusica,
+        child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: TextField(
               decoration: const InputDecoration(
                 labelText: "Pesquisar música",
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
               ),
               onChanged: (valor) {
-                setState(() {
-                  busca = valor;
-                });
+                busca = valor;
+                setState(() {});
               },
             ),
           ),
@@ -174,43 +162,22 @@ class _MinhasMusicasPageState extends State<MinhasMusicasPage> {
                     ),
                   )
                 : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
                     itemCount: lista.length,
-                    itemBuilder: (context, index) {
+                    itemBuilder: (_, index) {
                       final musica = lista[index];
 
-                      return ListTile(
-                        leading: IconButton(
-                          icon: Icon(
-                            musica.favorita ? Icons.star : Icons.star_border,
-                            color: musica.favorita ? Colors.amber : Colors.white,
-                          ),
-                          onPressed: () => alternarFavorita(musica),
-                        ),
-                        title: Text(musica.nome),
-                        subtitle: Text("${musica.artista} • Tom: ${musica.tom}"),
+                      return MusicaCard(
+                        musica: musica,
                         onTap: () => abrirCifra(musica),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => editarMusica(musica),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => excluirMusica(musica),
-                            ),
-                          ],
-                        ),
+                        onEditar: () => editarMusica(musica),
+                        onExcluir: () => excluirMusica(musica),
+                        onFavorita: () => alternarFavorita(musica),
                       );
                     },
                   ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: adicionarMusica,
-        child: const Icon(Icons.add),
       ),
     );
   }

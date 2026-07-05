@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/app_theme.dart';
 import 'pages/home_page.dart';
 
 void main() {
@@ -13,7 +14,7 @@ class CifraLive extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CifraLive',
-      theme: ThemeData.dark(),
+      theme: AppTheme.darkTheme,
       home: const HomePage(),
     );
   }

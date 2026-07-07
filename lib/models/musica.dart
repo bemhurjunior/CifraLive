@@ -5,12 +5,23 @@ class Musica {
   final String cifra;
   bool favorita;
 
+  final String playbackPath;
+  final String lrcPath;
+  final String clvPath;
+  final int bpm;
+  final double volume;
+
   Musica({
     required this.nome,
     required this.artista,
     required this.tom,
     required this.cifra,
     this.favorita = false,
+    this.playbackPath = '',
+    this.lrcPath = '',
+    this.clvPath = '',
+    this.bpm = 0,
+    this.volume = 1.0,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +31,11 @@ class Musica {
       'tom': tom,
       'cifra': cifra,
       'favorita': favorita,
+      'playbackPath': playbackPath,
+      'lrcPath': lrcPath,
+      'clvPath': clvPath,
+      'bpm': bpm,
+      'volume': volume,
     };
   }
 
@@ -30,6 +46,11 @@ class Musica {
       tom: map['tom'] ?? '',
       cifra: map['cifra'] ?? '',
       favorita: map['favorita'] ?? false,
+      playbackPath: map['playbackPath'] ?? '',
+      lrcPath: map['lrcPath'] ?? '',
+      clvPath: map['clvPath'] ?? '',
+      bpm: map['bpm'] ?? 0,
+      volume: (map['volume'] ?? 1.0).toDouble(),
     );
   }
 }

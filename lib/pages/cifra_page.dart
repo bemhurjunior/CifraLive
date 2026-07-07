@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/musica.dart';
 import '../core/app_colors.dart';
+import '../services/transpositor_service.dart';
 import 'modo_show_page.dart';
+import 'player_page.dart';
 
 class CifraPage extends StatefulWidget {
   final Musica musica;
@@ -16,16 +18,55 @@ class CifraPage extends StatefulWidget {
 }
 
 class _CifraPageState extends State<CifraPage> {
-  void abrirModoShow() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ModoShowPage(
-          musica: widget.musica,
-        ),
-      ),
+  int transposicao = 0;
+
+  String get tomAtual {
+    return TranspositorService.transporTom(
+      widget.musica.tom,
+      transposicao,
     );
   }
+
+  String get cifraAtual {
+    return TranspositorService.transporCifra(
+      widget.musica.cifra,
+      transposicao,
+    );
+  }
+
+  void subirTom() {
+    setState(() {
+      transposicao++;
+    });
+  }
+
+  void baixarTom() {
+    setState(() {
+      transposicao--;
+    });
+  }
+
+      void abrirModoShow() {
+  final musicaTransposta = Musica(
+    nome: widget.musica.nome,
+    artista: widget.musica.artista,
+    tom: tomAtual,
+    cifra: cifraAtual,
+    favorita: widget.musica.favorita,
+    playbackPath: widget.musica.playbackPath,
+    lrcPath: widget.musica.lrcPath,
+    clvPath: widget.musica.clvPath,
+    bpm: widget.musica.bpm,
+    volume: widget.musica.volume,
+  );
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ModoShowPage(musica: musicaTransposta),
+    ),
+  );
+}
 
   void alternarFavorita() {
     setState(() {
@@ -81,7 +122,7 @@ class _CifraPageState extends State<CifraPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Tom: ${widget.musica.tom}",
+                      "Tom: $tomAtual",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 18,
@@ -90,11 +131,50 @@ class _CifraPageState extends State<CifraPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: baixarTom,
+                            child: const Text("TOM -"),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            transposicao == 0
+                                ? "Original"
+                                : "${transposicao > 0 ? '+' : ''}$transposicao",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: subirTom,
+                            child: const Text("TOM +"),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: abrirModoShow,
                       icon: const Icon(Icons.theater_comedy),
                       label: const Text("Modo Show"),
                     ),
+                    const SizedBox(height: 12),
+                    PlayerPage(playbackPath: widget.musica.playbackPath),
                   ],
                 ),
               ),
@@ -104,7 +184,7 @@ class _CifraPageState extends State<CifraPage> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: SelectableText(
-                widget.musica.cifra,
+                cifraAtual,
                 style: const TextStyle(
                   fontSize: 26,
                   height: 1.5,

@@ -252,17 +252,17 @@ class _ModoShowPageState extends State<ModoShowPage> {
     int novoIndice;
 
     if (temLrc) {
-      final indiceLrc = LrcService.indiceLinhaAtual(
-        linhasLrc,
-        posicaoAtual,
-      );
+  final indiceLrc = LrcService.indiceLinhaAtual(
+    linhasLrc,
+    posicaoAtual,
+  );
 
-      if (indiceLrc < 0 || indiceLrc >= mapaLrcParaCifra.length) return;
+  if (indiceLrc < 0 || indiceLrc >= mapaLrcParaCifra.length) return;
 
-      novoIndice = mapaLrcParaCifra[indiceLrc];
+  novoIndice = mapaLrcParaCifra[indiceLrc] + 1;
 
-      if (novoIndice < 0) return;
-    } else {
+  if (novoIndice < 0 || novoIndice >= linhasCifra.length) return;
+} else {
       if (duracaoTotal.inMilliseconds <= 0) return;
 
       final progresso =

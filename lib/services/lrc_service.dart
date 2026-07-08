@@ -9,7 +9,8 @@ class LrcService {
     if (caminho.trim().isEmpty) return [];
 
     final arquivo = File(caminho);
-    if (!arquivo.existsSync()) return [];
+
+    if (!await arquivo.exists()) return [];
 
     final conteudo = await arquivo.readAsString();
     return lerConteudo(conteudo);
@@ -28,16 +29,15 @@ class LrcService {
       final fracao = match.group(3) ?? '0';
       final texto = (match.group(4) ?? '').trim();
 
-      final ms = fracao.length == 2
-          ? int.parse(fracao) * 10
-          : int.parse(fracao);
+      final milissegundos =
+          fracao.length == 2 ? int.parse(fracao) * 10 : int.parse(fracao);
 
       resultado.add(
         LrcLinha(
           tempo: Duration(
             minutes: minutos,
             seconds: segundos,
-            milliseconds: ms,
+            milliseconds: milissegundos,
           ),
           texto: texto,
         ),
@@ -52,24 +52,37 @@ class LrcService {
     required String nomeMusica,
     required List<LrcLinha> linhas,
   }) async {
-    final diretorio = await getApplicationDocumentsDirectory();
-    final pasta = Directory('${diretorio.path}/cifralive/lrc');
+    Directory diretorioBase;
 
-    if (!pasta.existsSync()) {
-      pasta.createSync(recursive: true);
+    try {
+      diretorioBase = await getApplicationSupportDirectory();
+    } catch (_) {
+      diretorioBase = Directory.current;
+    }
+
+    final pasta = Directory(
+      '${diretorioBase.path}${Platform.pathSeparator}cifralive${Platform.pathSeparator}lrc',
+    );
+
+    if (!await pasta.exists()) {
+      await pasta.create(recursive: true);
     }
 
     final nomeArquivo = _normalizarNome(nomeMusica);
-    final caminho = '${pasta.path}/$nomeArquivo.lrc';
+    final caminho = '${pasta.path}${Platform.pathSeparator}$nomeArquivo.lrc';
 
     final conteudo = linhas.map((linha) {
       return '${_formatarTempo(linha.tempo)}${linha.texto}';
     }).join('\n');
 
     final arquivo = File(caminho);
-    await arquivo.writeAsString(conteudo);
 
-    return caminho;
+    await arquivo.writeAsString(
+      conteudo,
+      flush: true,
+    );
+
+    return arquivo.path;
   }
 
   static String _formatarTempo(Duration d) {
@@ -88,7 +101,11 @@ class LrcService {
         .replaceAll(RegExp(r'[^\w\s-]'), '')
         .replaceAll(RegExp(r'\s+'), '_');
 
-    return limpo.isEmpty ? 'sincronizacao' : limpo;
+    if (limpo.isEmpty) {
+      return 'sincronizacao_${DateTime.now().millisecondsSinceEpoch}';
+    }
+
+    return limpo;
   }
 
   static int indiceLinhaAtual(List<LrcLinha> linhas, Duration posicao) {

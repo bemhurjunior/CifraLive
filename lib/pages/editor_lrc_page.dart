@@ -97,11 +97,12 @@ class _EditorLrcPageState extends State<EditorLrcPage> {
   }
 
   Future<void> salvarLrc() async {
-    if (sincronizacao.isEmpty) {
-      _mensagem('Nenhuma linha marcada.');
-      return;
-    }
+  if (sincronizacao.isEmpty) {
+    _mensagem('Nenhuma linha marcada.');
+    return;
+  }
 
+  try {
     setState(() => salvando = true);
 
     final caminho = await LrcService.salvarArquivo(
@@ -112,8 +113,18 @@ class _EditorLrcPageState extends State<EditorLrcPage> {
     if (!mounted) return;
 
     setState(() => salvando = false);
+
+    _mensagem('LRC salvo com sucesso.');
+
     Navigator.pop(context, caminho);
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() => salvando = false);
+
+    _mensagem('Erro ao salvar LRC: $e');
   }
+}
 
   String tempo(Duration d) {
     final min = d.inMinutes.toString().padLeft(2, '0');

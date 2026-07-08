@@ -127,7 +127,7 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
   }
 
   Future<void> criarSincronizacao() async {
-    if (playbackPath.isEmpty) {
+    if (playbackPath.trim().isEmpty) {
       _mostrarMensagem('Selecione um MP3 primeiro.');
       return;
     }
@@ -137,7 +137,7 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
       return;
     }
 
-    final musica = Musica(
+    final musicaParaEditor = Musica(
       nome: nomeController.text.trim(),
       artista: artistaController.text.trim(),
       tom: tomController.text.trim(),
@@ -150,20 +150,41 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
       volume: widget.musica?.volume ?? 1.0,
     );
 
-    final caminhoLrc = await Navigator.push<String>(
+    final resultado = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditorLrcPage(musica: musica),
+        builder: (_) => EditorLrcPage(musica: musicaParaEditor),
       ),
     );
 
-    if (caminhoLrc != null && caminhoLrc.isNotEmpty) {
-      setState(() {
-        lrcPath = caminhoLrc;
-      });
+    if (!mounted) return;
 
-      _mostrarMensagem('Sincronização salva com sucesso.');
+    if (resultado == null || resultado.trim().isEmpty) {
+      _mostrarMensagem('Nenhum LRC foi retornado.');
+      return;
     }
+
+    setState(() {
+      lrcPath = resultado.trim();
+    });
+
+    _mostrarMensagem('LRC salvo e vinculado à música.');
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sincronização salva'),
+        content: Text(
+          'Arquivo LRC vinculado:\n\n${_nomeArquivo(lrcPath, lrcPath)}\n\nAgora clique em "Salvar alterações" para gravar na música.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _executarImportacao(
@@ -240,7 +261,7 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
   }
 
   String _nomeArquivo(String caminho, String textoVazio) {
-    if (caminho.isEmpty) {
+    if (caminho.trim().isEmpty) {
       return textoVazio;
     }
 
@@ -391,26 +412,26 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
               style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 12),
-           SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton.icon(
-    onPressed: onSelecionar,
-    icon: Icon(iconeBotao),
-    label: Text(textoBotao),
-  ),
-),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: onSelecionar,
+                icon: Icon(iconeBotao),
+                label: Text(textoBotao),
+              ),
+            ),
             if (onRemover != null) ...[
               const SizedBox(height: 8),
               SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: OutlinedButton.icon(
-    onPressed: onRemover,
-    icon: const Icon(Icons.delete_outline),
-    label: const Text('Remover'),
-  ),
-),
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: onRemover,
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Remover'),
+                ),
+              ),
             ],
           ],
         ),

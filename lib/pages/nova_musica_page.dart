@@ -7,7 +7,9 @@ import '../services/clipboard_service.dart';
 import '../services/analisador_cifra_service.dart';
 import '../services/audio_picker_service.dart';
 import '../services/lrc_picker_service.dart';
+import '../services/compartilhamento_service.dart';
 import '../widgets/importacao_card.dart';
+import '../widgets/lrc_card.dart';
 import 'editor_lrc_page.dart';
 
 class NovaMusicaPage extends StatefulWidget {
@@ -124,6 +126,21 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
     });
 
     _mostrarMensagem('Arquivo LRC removido.');
+  }
+
+  Future<void> exportarLrc() async {
+    try {
+      if (lrcPath.trim().isEmpty) {
+        _mostrarMensagem('Nenhum LRC para exportar.');
+        return;
+      }
+
+      await CompartilhamentoService.compartilharArquivo(lrcPath);
+
+      _mostrarMensagem('LRC exportado com sucesso.');
+    } catch (e) {
+      _mostrarMensagem('Erro ao exportar LRC: $e');
+    }
   }
 
   Future<void> criarSincronizacao() async {
@@ -324,31 +341,15 @@ class _NovaMusicaPageState extends State<NovaMusicaPage> {
 
             const SizedBox(height: 16),
 
-            _cardArquivo(
-              titulo: 'SINCRONIZAÇÃO LRC',
+            LrcCard(
               nomeArquivo: _nomeArquivo(
                 lrcPath,
                 'Nenhum arquivo LRC selecionado',
               ),
-              textoBotao: 'Selecionar LRC',
-              iconeBotao: Icons.lyrics,
               onSelecionar: selecionarLrc,
+              onCriarSincronizacao: criarSincronizacao,
+              onExportar: lrcPath.isEmpty ? null : exportarLrc,
               onRemover: lrcPath.isEmpty ? null : removerLrc,
-            ),
-
-            const SizedBox(height: 16),
-
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton.icon(
-                onPressed: criarSincronizacao,
-                icon: const Icon(Icons.music_note),
-                label: const Text(
-                  'Criar Sincronização',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
             ),
 
             const SizedBox(height: 16),

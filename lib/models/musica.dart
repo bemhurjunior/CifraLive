@@ -1,13 +1,17 @@
+import 'dart:convert';
+
 class Musica {
   final String nome;
   final String artista;
   final String tom;
   final String cifra;
+
   bool favorita;
 
   final String playbackPath;
   final String lrcPath;
   final String clvPath;
+
   final int bpm;
   final double volume;
 
@@ -23,6 +27,10 @@ class Musica {
     this.bpm = 0,
     this.volume = 1.0,
   });
+
+  //==========================
+  // MAP
+  //==========================
 
   Map<String, dynamic> toMap() {
     return {
@@ -51,6 +59,50 @@ class Musica {
       clvPath: map['clvPath'] ?? '',
       bpm: map['bpm'] ?? 0,
       volume: (map['volume'] ?? 1.0).toDouble(),
+    );
+  }
+
+  //==========================
+  // JSON
+  //==========================
+
+  String toJson() {
+    return jsonEncode(toMap());
+  }
+
+  factory Musica.fromJson(String source) {
+    return Musica.fromMap(
+      jsonDecode(source),
+    );
+  }
+
+  //==========================
+  // COPY
+  //==========================
+
+  Musica copyWith({
+    String? nome,
+    String? artista,
+    String? tom,
+    String? cifra,
+    bool? favorita,
+    String? playbackPath,
+    String? lrcPath,
+    String? clvPath,
+    int? bpm,
+    double? volume,
+  }) {
+    return Musica(
+      nome: nome ?? this.nome,
+      artista: artista ?? this.artista,
+      tom: tom ?? this.tom,
+      cifra: cifra ?? this.cifra,
+      favorita: favorita ?? this.favorita,
+      playbackPath: playbackPath ?? this.playbackPath,
+      lrcPath: lrcPath ?? this.lrcPath,
+      clvPath: clvPath ?? this.clvPath,
+      bpm: bpm ?? this.bpm,
+      volume: volume ?? this.volume,
     );
   }
 }
